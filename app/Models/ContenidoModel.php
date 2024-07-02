@@ -28,8 +28,66 @@ class ContenidoModel extends Model
     protected $deletedField  = 'deleted_at';
 
     // Validation
-    protected $validationRules      = [];
-    protected $validationMessages   = [];
+    protected $validationRules      = [
+        'titulo'            => [
+            'label' => 'titulo',
+            'rules' => 'required'
+        ], 
+        'palabras_clave'    => [
+            'label' => 'palabras_clave',
+            'rules' => 'required'
+        ], 
+        'area_conocimiento' => [
+            'label' => 'area_conocimiento',
+            'rules' => 'required'
+        ], 
+        'tipo_contenido'    => [
+            'label' => 'tipo_contenido',
+            'rules' => 'required'
+        ], 
+        'imagen_portada'    => [
+            'label' => 'imagen_portada',
+            'rules' => 'required'
+        ], 
+        'thumbnail'         => [
+            'label' => 'thumbnail',
+            'rules' => 'required'
+        ], 
+        'descripcion'       => [
+            'label' => 'descripcion',
+            'rules' => 'required'
+        ], 
+        'contenido'         => [
+            'label' => 'contenido',
+            'rules' => 'required'
+        ]
+    ];
+    protected $validationMessages   = [
+        'titulo'            => [
+            'required' => 'El campo {field} es requerido.'
+        ], 
+        'palabras_clave'    => [
+            'required' => 'El campo {field} es requerido.'
+        ], 
+        'area_conocimiento' => [
+            'required' => 'El campo {field} es requerido.'
+        ], 
+        'tipo_contenido'    => [
+            'required' => 'El campo {field} es requerido.'
+        ], 
+        'imagen_portada'    => [
+            'required' => 'El campo {field} es requerido.'
+        ], 
+        'thumbnail'         => [
+            'required' => 'El campo {field} es requerido.'
+        ], 
+        'descripcion'       => [
+            'required' => 'El campo {field} es requerido.'
+        ], 
+        'contenido'         => [
+            'required' => 'El campo {field} es requerido.'
+        ]
+    ];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 

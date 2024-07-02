@@ -4,12 +4,16 @@ namespace App\Controllers;
 
 use App\Database\Migrations\Contenidos;
 use App\Models\ContenidoModel;
+use CodeIgniter\API\ResponseTrait;
 
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class ContenidoController extends ResourceController
 {
+    protected $helpers = ['form'];
+    use ResponseTrait;
+
     /**
      * Return an array of resource objects, themselves in array format.
      *
@@ -18,7 +22,16 @@ class ContenidoController extends ResourceController
     public function index()
     {
         $model = new ContenidoModel();
-        $data = $model->findAll();
+
+        $data = $model  ->orderBy('created_at', 'DESC')
+                        ->orderBy('updated_at', 'DESC')
+                        ->findAll();
+
+        foreach ($data as &$contenido) {
+            $contenido['thumbnail'] = base_url('uploads/' . $contenido['thumbnail']);
+            $contenido['imagen_portada'] = base_url('uploads/' . $contenido['imagen_portada']);
+        }
+    
         return $this->respond($data);
     }
 
@@ -35,6 +48,9 @@ class ContenidoController extends ResourceController
         $data = $model->find(['id' => $id]);
 
         if (!$data) return $this->failNotFound('No Data Found');
+
+        $data[0]["thumbnail"] = base_url('uploads/' . $data[0]['thumbnail']);
+        $data[0]["imagen_portada"] = base_url('uploads/' . $data[0]['imagen_portada']);
 
         return $this->respond($data[0]);
     }
@@ -56,41 +72,34 @@ class ContenidoController extends ResourceController
      */
     public function create()
     {
-        helper(['form']);
-        $rules = [
-            'titulo'            => 'required', 
-            'palabras_clave'    => 'required', 
-            'area_conocimiento' => 'required', 
-            'tipo_contenido'    => 'required', 
-            'imagen_portada'    => 'required', 
-            'thumbnail'         => 'required', 
-            'descripcion'       => 'required', 
-            'contenido'         => 'required'
-        ];
-        $data = [
-            'titulo'            => $this->request->getVar('titulo'),
-            'palabras_clave'    => $this->request->getVar('palabras_clave'),
-            'area_conocimiento' => $this->request->getVar('area_conocimiento'),
-            'tipo_contenido'    => $this->request->getVar('tipo_contenido'),
-            'imagen_portada'    => $this->request->getVar('imagen_portada'),
-            'thumbnail'         => $this->request->getVar('thumbnail'),
-            'descripcion'       => $this->request->getVar('descripcion'),
-            'contenido'         => $this->request->getVar('contenido')
-        ];
-        
-        if(!$this->validate($rules)) return $this->fail($this->validator->getErrors());
+        $data = $this->request->getPost();
 
-        $model = new ContenidoModel();
-        $model->save($data);
-        
-        $response = [
-            'status' => 201,
-            'error' => null,
-            'messages' => [
-                'success' => 'Data Inserted'
-            ]
-        ];
-        return $this->respondCreated($response);
+        $contenidoModel = new ContenidoModel();
+
+        if (!$contenidoModel->validate($data)) {
+            $validationErrors = $contenidoModel->errors();
+
+            return $this->failValidationErrors($validationErrors);
+        }
+
+        $imageFields = ['imagen_portada', 'thumbnail'];
+        foreach ($imageFields as $field) {
+            $img = $this->request->getFile($field);
+            
+            if ($img->isValid() && !$img->hasMoved()) {
+                $newName = $img->getRandomName();
+                $img->move(FCPATH . 'uploads', $newName);
+                $data[$field] = $newName;
+            }
+        }
+
+        $inserted = $contenidoModel->insert($data);
+
+        if (!$inserted) {
+            return $this->failServerError('No se pudo publicar el contenido, intenta más tarde');
+        }
+
+        return $this->respondCreated(['message' => 'Contenido publicado correctamente'], 201);
     }
 
     /**
@@ -114,27 +123,16 @@ class ContenidoController extends ResourceController
      */
     public function update($id = null)
     {
-        helper(['form']);
         $rules = [
             'titulo'            => 'required', 
             'palabras_clave'    => 'required', 
             'area_conocimiento' => 'required', 
             'tipo_contenido'    => 'required', 
-            'imagen_portada'    => 'required', 
-            'thumbnail'         => 'required', 
             'descripcion'       => 'required', 
             'contenido'         => 'required'
         ];
-        $data = [
-            'titulo'            => $this->request->getVar('titulo'),
-            'palabras_clave'    => $this->request->getVar('palabras_clave'),
-            'area_conocimiento' => $this->request->getVar('area_conocimiento'),
-            'tipo_contenido'    => $this->request->getVar('tipo_contenido'),
-            'imagen_portada'    => $this->request->getVar('imagen_portada'),
-            'thumbnail'         => $this->request->getVar('thumbnail'),
-            'descripcion'       => $this->request->getVar('descripcion'),
-            'contenido'         => $this->request->getVar('contenido')
-        ];
+
+        $data = $this->request->getJSON();
         
         if(!$this->validate($rules)) return $this->fail($this->validator->getErrors());
 
@@ -142,16 +140,10 @@ class ContenidoController extends ResourceController
         $find = $model->find(['id' => $id]);
 
         if(!$find) return $this->failNotFound('No Data Found');
+        
         $model->update($id, $data);
         
-        $response = [
-            'status' => 200,
-            'error' => null,
-            'messages' => [
-                'success' => 'Data updated'
-            ]
-        ];
-        return $this->respond($response);
+        return $this->respondCreated(['message' => 'Contenido actualizado correctamente'], 201);
     }
 
     /**
@@ -167,16 +159,24 @@ class ContenidoController extends ResourceController
         $find = $model->find(['id' => $id]);
 
         if(!$find) return $this->failNotFound('No Data Found');
+
+        // Eliminar las imágenes asociadas
+        $camposImagen = ['imagen_portada', 'thumbnail'];
+
+        foreach ($camposImagen as $campo) {
+            if (!empty($find[$campo])) {
+                $rutaImagen = FCPATH . 'uploads/' . $find[$campo];
+                echo $rutaImagen;
+                if (file_exists($rutaImagen)) {
+                    unlink($rutaImagen);
+                }
+            }
+        }
         
-        $model->delete($id);
-        
-        $response = [
-            'status' => 200,
-            'error' => null,
-            'messages' => [
-                'success' => 'Data deleted'
-            ]
-        ];
-        return $this->respond($response);
+        if ($model->delete($id)) {
+            return $this->respondDeleted(['message' => 'Contenido eliminado correctamente']);
+        } else {
+            return $this->failServerError('No se pudo eliminar el contenido');
+        }
     }
 }
