@@ -4,6 +4,8 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
+// MIGRACIÓN PARA CREAR LA TABLA DE PUBLICACIONES
+
 class Contenidos extends Migration
 {
     public function up()

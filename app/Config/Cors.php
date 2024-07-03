@@ -50,8 +50,10 @@ class Cors extends \Fluent\Cors\Config\Cors
      *
      * @var array
      */
+
     // AQUÍ SE CONFIGURA LA URL PERMITIDA PARA LA MODIFICACIÓN DE DATOS EN LA BASE
-    // ESTO SE HIZO POR TEMAS DE SEGURIDAD
+    // ESTO SE HIZO POR TEMAS DE SEGURIDAD, PARA QUE EL SERVICIO FRONT END FUERA EL 
+    // UNICO QUE PUEDA MANEJAR LA INFORMACIÓN DEL BACKEND
     public $allowedOrigins = ['http://localhost:3000'];
 
     /**

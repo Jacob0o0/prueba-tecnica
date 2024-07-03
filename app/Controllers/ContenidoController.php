@@ -15,7 +15,7 @@ class ContenidoController extends ResourceController
     use ResponseTrait;
 
     /**
-     * Return an array of resource objects, themselves in array format.
+     * FUNCIÓN PARA OBTENER TODAS LAS PUBLICACIONES SUBIDAS
      *
      * @return ResponseInterface
      */
@@ -27,16 +27,17 @@ class ContenidoController extends ResourceController
                         ->orderBy('updated_at', 'DESC')
                         ->findAll();
 
+        // FUNCIÓN CREADA CON EL MOTIVO DE ENTREGARLE AL FRONT END LA RUTA COMPLETA DE LAS IMAGENES ALMACENADAS:
         foreach ($data as &$contenido) {
-            $contenido['thumbnail'] = base_url('uploads/' . $contenido['thumbnail']);
-            $contenido['imagen_portada'] = base_url('uploads/' . $contenido['imagen_portada']);
+            $contenido['thumbnail']         = base_url('uploads/' . $contenido['thumbnail']     );
+            $contenido['imagen_portada']    = base_url('uploads/' . $contenido['imagen_portada']);
         }
     
         return $this->respond($data);
     }
 
     /**
-     * Return the properties of a resource object.
+     * FUNCIÓN PARA OBTENER UNA PUBLICACIÓN CON UN ID EN ESPECÍFICO
      *
      * @param int|string|null $id
      *
@@ -45,28 +46,20 @@ class ContenidoController extends ResourceController
     public function show($id = null)
     {
         $model = new ContenidoModel();
+
         $data = $model->find(['id' => $id]);
 
         if (!$data) return $this->failNotFound('No Data Found');
 
-        $data[0]["thumbnail"] = base_url('uploads/' . $data[0]['thumbnail']);
-        $data[0]["imagen_portada"] = base_url('uploads/' . $data[0]['imagen_portada']);
+        // MANIPULACIÓN DE DATOS CON EL MOTIVO DE ENTREGARLE AL FRONT END LA RUTA COMPLETA DE LAS IMAGENES ALMACENADAS
+        $data[0]["thumbnail"]       = base_url('uploads/' . $data[0]['thumbnail']       );
+        $data[0]["imagen_portada"]  = base_url('uploads/' . $data[0]['imagen_portada']  );
 
         return $this->respond($data[0]);
     }
 
     /**
-     * Return a new resource object, with default properties.
-     *
-     * @return ResponseInterface
-     */
-    public function new()
-    {
-        //
-    }
-
-    /**
-     * Create a new resource object, from "posted" parameters.
+     * FUNCIÓN PARA CREAR Y SUBIR UNA NUEVA PUBLICACIÓN AL SISTEMA
      *
      * @return ResponseInterface
      */
@@ -76,19 +69,23 @@ class ContenidoController extends ResourceController
 
         $contenidoModel = new ContenidoModel();
 
+        // SE VALIDA CON EL MODELO QUE LOS DATOS CUMPLAN CON LAS REGLAS DEFINIDAS
         if (!$contenidoModel->validate($data)) {
             $validationErrors = $contenidoModel->errors();
 
             return $this->failValidationErrors($validationErrors);
         }
 
+        // FUNCIÓN CREADA PARA OBTENER Y ALMACENAR LAS IMÁGENES DADAS POR EL USUARIO
         $imageFields = ['imagen_portada', 'thumbnail'];
         foreach ($imageFields as $field) {
             $img = $this->request->getFile($field);
             
             if ($img->isValid() && !$img->hasMoved()) {
                 $newName = $img->getRandomName();
+
                 $img->move(FCPATH . 'uploads', $newName);
+
                 $data[$field] = $newName;
             }
         }
@@ -103,19 +100,7 @@ class ContenidoController extends ResourceController
     }
 
     /**
-     * Return the editable properties of a resource object.
-     *
-     * @param int|string|null $id
-     *
-     * @return ResponseInterface
-     */
-    public function edit($id = null)
-    {
-        //
-    }
-
-    /**
-     * Add or update a model resource, from "posted" properties.
+     * FUNCIÓN PARA EDITAR UNA PUBLICACIÓN SUBIDA AL SISTEMA
      *
      * @param int|string|null $id
      *
@@ -134,9 +119,11 @@ class ContenidoController extends ResourceController
 
         $data = $this->request->getJSON();
         
+        // SE VALIDA QUE LOS DATOS CUMPLAN LAS REGLAS DEFINIDAS
         if(!$this->validate($rules)) return $this->fail($this->validator->getErrors());
 
         $model = new ContenidoModel();
+
         $find = $model->find(['id' => $id]);
 
         if(!$find) return $this->failNotFound('No Data Found');
@@ -147,7 +134,7 @@ class ContenidoController extends ResourceController
     }
 
     /**
-     * Delete the designated resource object from the model.
+     * FUNCIÓN PARA ELIMINAR UNA PUBLICACION DEL SISTEMA
      *
      * @param int|string|null $id
      *
@@ -156,17 +143,19 @@ class ContenidoController extends ResourceController
     public function delete($id = null)
     {
         $model = new ContenidoModel();
+
         $find = $model->find(['id' => $id]);
 
         if(!$find) return $this->failNotFound('No Data Found');
 
-        // Eliminar las imágenes asociadas
+        // FUNCIÓN PARA ELIMINAR LAS IMAGENES ASOCIADAS
+        // NOTA: POR ALGÚN MOTIVO NO DETECTADO, NO SE PUEDEN ELIMINAR LAS IMAGENES EXISTENTES
         $camposImagen = ['imagen_portada', 'thumbnail'];
 
         foreach ($camposImagen as $campo) {
             if (!empty($find[$campo])) {
                 $rutaImagen = FCPATH . 'uploads/' . $find[$campo];
-                echo $rutaImagen;
+
                 if (file_exists($rutaImagen)) {
                     unlink($rutaImagen);
                 }

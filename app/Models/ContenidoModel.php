@@ -12,6 +12,7 @@ class ContenidoModel extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
+    // DATOS QUE SE PUEDEN MODIFICAR O SUBIR:
     protected $allowedFields    = ['titulo', 'palabras_clave', 'area_conocimiento', 'tipo_contenido', 'imagen_portada', 'thumbnail', 'descripcion', 'contenido'];
 
     protected bool $allowEmptyInserts = false;
@@ -27,7 +28,7 @@ class ContenidoModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    // Validation
+    // VALIDACIONES
     protected $validationRules      = [
         'titulo'            => [
             'label' => 'titulo',
@@ -62,6 +63,8 @@ class ContenidoModel extends Model
             'rules' => 'required'
         ]
     ];
+
+    // MENSAJES PARA VALIDACIONES INCORRECTAS
     protected $validationMessages   = [
         'titulo'            => [
             'required' => 'El campo {field} es requerido.'
